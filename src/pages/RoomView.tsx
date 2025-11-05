@@ -7,6 +7,7 @@ import { ArrowLeft, Package, CheckCircle2, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TransferItemDialog } from "@/components/TransferItemDialog";
 import { NeededItemDialog } from "@/components/NeededItemDialog";
+import { EditAssignmentDialog } from "@/components/EditAssignmentDialog";
 import { toast } from "sonner";
 
 interface ItemAssignment {
@@ -37,6 +38,8 @@ const RoomView = () => {
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [neededItemDialogOpen, setNeededItemDialogOpen] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<ItemAssignment | null>(null);
+  const [editAssignmentDialogOpen, setEditAssignmentDialogOpen] = useState(false);
+  const [assignmentToEdit, setAssignmentToEdit] = useState<any>(null);
 
   useEffect(() => {
     if (roomId) {
@@ -99,6 +102,11 @@ const RoomView = () => {
   const handleTransfer = (assignment: ItemAssignment) => {
     setSelectedAssignment(assignment);
     setTransferDialogOpen(true);
+  };
+
+  const handleEditAssignment = (assignment: any) => {
+    setAssignmentToEdit(assignment);
+    setEditAssignmentDialogOpen(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -239,6 +247,13 @@ const RoomView = () => {
                     )}
                     <Button
                       size="sm"
+                      variant="outline"
+                      onClick={() => handleEditAssignment(assignment)}
+                    >
+                      Edit Item
+                    </Button>
+                    <Button
+                      size="sm"
                       variant="secondary"
                       onClick={() => handleTransfer(assignment)}
                     >
@@ -272,6 +287,21 @@ const RoomView = () => {
             setNeededItemDialogOpen(false);
           }}
           roomId={roomId}
+        />
+
+        <EditAssignmentDialog
+          assignment={assignmentToEdit ? {
+            id: assignmentToEdit.id,
+            item_id: assignmentToEdit.items.id,
+            room_id: roomId!
+          } : null}
+          currentItemType={assignmentToEdit?.items?.item_type || ""}
+          open={editAssignmentDialogOpen}
+          onOpenChange={setEditAssignmentDialogOpen}
+          onEditComplete={() => {
+            setEditAssignmentDialogOpen(false);
+            fetchRoomData();
+          }}
         />
       </div>
     </div>

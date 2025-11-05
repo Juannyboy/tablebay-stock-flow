@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -49,7 +50,7 @@ export const NeededItemDialog = ({
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
   const [selectedFloorId, setSelectedFloorId] = useState("");
-  const [selectedRoomId, setSelectedRoomId] = useState(roomId || "");
+  const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>(roomId ? [roomId] : []);
   const [floors, setFloors] = useState<Floor[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(false);
@@ -83,20 +84,29 @@ export const NeededItemDialog = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (selectedRoomIds.length === 0) {
+      toast.error("Please select at least one room");
+      return;
+    }
+    
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("needed_items").insert({
-        room_id: selectedRoomId,
+      // Insert one record per selected room
+      const insertData = selectedRoomIds.map(roomId => ({
+        room_id: roomId,
         item_type: itemType,
         description,
         quantity,
         notes,
-      });
+      }));
+
+      const { error } = await supabase.from("needed_items").insert(insertData);
 
       if (error) throw error;
 
-      toast.success("Needed item added successfully");
+      toast.success(`Item request added for ${selectedRoomIds.length} room(s)`);
       onComplete();
       resetForm();
     } catch (error) {
@@ -113,7 +123,15 @@ export const NeededItemDialog = ({
     setQuantity(1);
     setNotes("");
     setSelectedFloorId("");
-    setSelectedRoomId("");
+    setSelectedRoomIds(roomId ? [roomId] : []);
+  };
+
+  const toggleRoom = (roomId: string) => {
+    setSelectedRoomIds(prev => 
+      prev.includes(roomId) 
+        ? prev.filter(id => id !== roomId)
+        : [...prev, roomId]
+    );
   };
 
   return (
@@ -178,19 +196,33 @@ export const NeededItemDialog = ({
 
           {selectedFloorId && (
             <div className="space-y-2">
-              <Label htmlFor="room">Room Number</Label>
-              <Select value={selectedRoomId} onValueChange={setSelectedRoomId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select room" />
-                </SelectTrigger>
-                <SelectContent>
-                  {rooms.map((room) => (
-                    <SelectItem key={room.id} value={room.id}>
-                      {room.room_number}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Select Rooms</Label>
+              <div className="border rounded-md p-4 max-h-48 overflow-y-auto space-y-2">
+                {rooms.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No rooms found for this floor
+                  </p>
+                ) : (
+                  rooms.map((room) => (
+                    <div key={room.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={room.id}
+                        checked={selectedRoomIds.includes(room.id)}
+                        onCheckedChange={() => toggleRoom(room.id)}
+                      />
+                      <Label
+                        htmlFor={room.id}
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        Room {room.room_number}
+                      </Label>
+                    </div>
+                  ))
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {selectedRoomIds.length} room(s) selected
+              </p>
             </div>
           )}
 
@@ -206,7 +238,7 @@ export const NeededItemDialog = ({
           </div>
 
           <div className="flex gap-2">
-            <Button type="submit" disabled={loading || !selectedRoomId} className="flex-1">
+            <Button type="submit" disabled={loading || selectedRoomIds.length === 0} className="flex-1">
               {loading ? "Adding..." : "Add Request"}
             </Button>
             <Button
