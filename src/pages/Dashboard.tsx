@@ -9,9 +9,11 @@ import {
   CheckCircle2, 
   TruckIcon,
   Wrench,
-  BarChart3
+  BarChart3,
+  Plus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { NeededItemDialog } from "@/components/NeededItemDialog";
 
 interface DashboardStats {
   totalItems: number;
@@ -35,6 +37,7 @@ const Dashboard = () => {
     totalRooms: 0,
   });
   const [floors, setFloors] = useState<any[]>([]);
+  const [neededItemDialogOpen, setNeededItemDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -148,7 +151,7 @@ const Dashboard = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Button 
             size="lg" 
             className="h-20"
@@ -165,6 +168,15 @@ const Dashboard = () => {
           >
             <Building2 className="mr-2 h-5 w-5" />
             Stock by Room
+          </Button>
+          <Button 
+            size="lg" 
+            className="h-20"
+            variant="outline"
+            onClick={() => setNeededItemDialogOpen(true)}
+          >
+            <Plus className="mr-2 h-5 w-5" />
+            Request Items Not on Site
           </Button>
           <Button 
             size="lg" 
@@ -198,6 +210,14 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        <NeededItemDialog
+          open={neededItemDialogOpen}
+          onOpenChange={setNeededItemDialogOpen}
+          onComplete={() => {
+            setNeededItemDialogOpen(false);
+          }}
+        />
       </div>
     </div>
   );

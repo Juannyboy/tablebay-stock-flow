@@ -164,7 +164,6 @@ const StockByRoom = () => {
                       size="icon"
                       variant="outline"
                       onClick={() => handleDeleteClick(item)}
-                      disabled={item.quantity_assigned > 0}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -229,18 +228,15 @@ const StockByRoom = () => {
               <AlertDialogDescription>
                 Are you sure you want to delete "{itemToDelete?.item_type}"? This action cannot be undone.
                 {itemToDelete && itemToDelete.quantity_assigned > 0 && (
-                  <span className="block mt-2 text-destructive font-semibold">
-                    Cannot delete: {itemToDelete.quantity_assigned} items are already assigned to rooms.
+                  <span className="block mt-2 text-muted-foreground">
+                    Note: This will also remove all {itemToDelete.quantity_assigned} room assignments.
                   </span>
                 )}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={confirmDelete}
-                disabled={itemToDelete ? itemToDelete.quantity_assigned > 0 : false}
-              >
+              <AlertDialogAction onClick={confirmDelete}>
                 Delete
               </AlertDialogAction>
             </AlertDialogFooter>
