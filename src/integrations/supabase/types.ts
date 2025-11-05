@@ -153,6 +153,39 @@ export type Database = {
         }
         Relationships: []
       }
+      needed_items: {
+        Row: {
+          description: string | null
+          fulfilled: boolean
+          id: string
+          item_type: string
+          notes: string | null
+          quantity: number
+          requested_at: string
+          room_id: string
+        }
+        Insert: {
+          description?: string | null
+          fulfilled?: boolean
+          id?: string
+          item_type: string
+          notes?: string | null
+          quantity?: number
+          requested_at?: string
+          room_id: string
+        }
+        Update: {
+          description?: string | null
+          fulfilled?: boolean
+          id?: string
+          item_type?: string
+          notes?: string | null
+          quantity?: number
+          requested_at?: string
+          room_id?: string
+        }
+        Relationships: []
+      }
       rooms: {
         Row: {
           created_at: string | null

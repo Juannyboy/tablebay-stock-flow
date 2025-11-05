@@ -85,6 +85,15 @@ const StockByRoom = () => {
     if (!itemToDelete) return;
 
     try {
+      // First delete all assignments for this item
+      const { error: assignError } = await supabase
+        .from("item_assignments")
+        .delete()
+        .eq("item_id", itemToDelete.id);
+
+      if (assignError) throw assignError;
+
+      // Then delete the item
       const { error } = await supabase
         .from("items")
         .delete()

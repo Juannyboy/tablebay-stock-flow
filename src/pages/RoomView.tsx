@@ -3,9 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Package, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Package, CheckCircle2, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TransferItemDialog } from "@/components/TransferItemDialog";
+import { NeededItemDialog } from "@/components/NeededItemDialog";
 import { toast } from "sonner";
 
 interface ItemAssignment {
@@ -18,12 +19,23 @@ interface ItemAssignment {
   };
 }
 
+interface NeededItem {
+  id: string;
+  item_type: string;
+  description: string;
+  quantity: number;
+  notes: string;
+  fulfilled: boolean;
+}
+
 const RoomView = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const [room, setRoom] = useState<any>(null);
   const [assignments, setAssignments] = useState<ItemAssignment[]>([]);
+  const [neededItems, setNeededItems] = useState<NeededItem[]>([]);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [neededItemDialogOpen, setNeededItemDialogOpen] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<ItemAssignment | null>(null);
 
   useEffect(() => {
@@ -60,6 +72,14 @@ const RoomView = () => {
       .eq("room_id", roomId);
 
     if (assignmentsData) setAssignments(assignmentsData as any);
+
+    const { data: neededData } = await supabase
+      .from("needed_items")
+      .select("*")
+      .eq("room_id", roomId)
+      .eq("fulfilled", false);
+
+    if (neededData) setNeededItems(neededData);
   };
 
   const updateStatus = async (assignmentId: string, newStatus: "building" | "built" | "delivering" | "in_room") => {
@@ -111,11 +131,48 @@ const RoomView = () => {
           Back
         </Button>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Room {room.room_number}</h1>
-          <p className="text-muted-foreground">{room.floors?.display_name}</p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Room {room.room_number}</h1>
+            <p className="text-muted-foreground">{room.floors?.display_name}</p>
+          </div>
+          <Button onClick={() => setNeededItemDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Request Items Not on Site
+          </Button>
         </div>
 
+        {neededItems.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-4">Items Needed (Not on Site)</h2>
+            <div className="space-y-3">
+              {neededItems.map((item) => (
+                <Card key={item.id} className="border-warning">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{item.item_type}</CardTitle>
+                        {item.description && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {item.description}
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant="secondary">Quantity: {item.quantity}</Badge>
+                    </div>
+                  </CardHeader>
+                  {item.notes && (
+                    <CardContent>
+                      <p className="text-sm">{item.notes}</p>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <h2 className="text-xl font-semibold mb-4">Assigned Items</h2>
         <div className="space-y-4">
           {assignments.length === 0 ? (
             <Card>
@@ -206,6 +263,16 @@ const RoomView = () => {
             }}
           />
         )}
+
+        <NeededItemDialog
+          open={neededItemDialogOpen}
+          onOpenChange={setNeededItemDialogOpen}
+          onComplete={() => {
+            fetchRoomData();
+            setNeededItemDialogOpen(false);
+          }}
+          roomId={roomId}
+        />
       </div>
     </div>
   );
