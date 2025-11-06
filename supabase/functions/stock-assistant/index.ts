@@ -22,6 +22,10 @@ serve(async (req) => {
 
     // Fetch all relevant data
     const { data: items } = await supabase.from("items").select("*");
+    const { data: rooms } = await supabase.from("rooms").select(`
+      *,
+      floors(floor_number, display_name)
+    `);
     const { data: assignments } = await supabase.from("item_assignments").select(`
       *,
       items(item_type, description),
@@ -31,13 +35,25 @@ serve(async (req) => {
     const context = `
 You are a stock assistant for a construction site at Table Bay hotel.
 
-Current stock items:
+IMPORTANT INSTRUCTIONS:
+- When asked about rooms that DON'T have something, you MUST check the complete list of all rooms and find which ones are missing that item type.
+- Floor names like "5 east" refer to floors where display_name contains "east" and floor_number is "5".
+- Item types are case-insensitive (e.g., "doorframes", "Doorframes", "DOORFRAMES" are the same).
+- To find rooms WITHOUT an item: Look at ALL rooms on that floor, then exclude rooms that have assignments for that item_type.
+
+ALL ROOMS IN THE DATABASE:
+${JSON.stringify(rooms, null, 2)}
+
+CURRENT STOCK ITEMS:
 ${JSON.stringify(items, null, 2)}
 
-Item assignments to rooms:
+ITEM ASSIGNMENTS TO ROOMS:
 ${JSON.stringify(assignments, null, 2)}
 
-Answer the user's question based on this data. Be specific about room numbers and floors.
+When answering:
+1. First identify all rooms matching the floor criteria
+2. Then check which of those rooms have the specified item assigned
+3. Return the rooms that DON'T have that item (the ones missing from assignments)
 `;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
