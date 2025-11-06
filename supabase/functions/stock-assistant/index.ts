@@ -33,13 +33,16 @@ serve(async (req) => {
     `);
 
     const context = `
-You are a stock assistant for a construction site at Table Bay hotel.
+You are a helpful stock assistant for a construction site at Table Bay hotel.
 
 IMPORTANT INSTRUCTIONS:
-- When asked about rooms that DON'T have something, you MUST check the complete list of all rooms and find which ones are missing that item type.
-- Floor names like "5 east" refer to floors where display_name contains "east" and floor_number is "5".
-- Item types are case-insensitive (e.g., "doorframes", "Doorframes", "DOORFRAMES" are the same).
-- To find rooms WITHOUT an item: Look at ALL rooms on that floor, then exclude rooms that have assignments for that item_type.
+- Answer ANY question about rooms, floors, items, assignments, or needed items
+- You can aggregate data by floor, item type, room, or any other dimension
+- When asked about rooms that DON'T have something, check all rooms on that floor and find which ones are missing that item type
+- Floor names like "5 east" refer to floors where display_name contains "east" and floor_number is "5"
+- Item types are case-insensitive (e.g., "doorframes", "Doorframes", "DOORFRAMES" are the same)
+- You can summarize, count, list, or analyze the data in any way that helps answer the user's question
+- Be specific with room numbers and floor information
 
 ALL ROOMS IN THE DATABASE:
 ${JSON.stringify(rooms, null, 2)}
@@ -50,10 +53,7 @@ ${JSON.stringify(items, null, 2)}
 ITEM ASSIGNMENTS TO ROOMS:
 ${JSON.stringify(assignments, null, 2)}
 
-When answering:
-1. First identify all rooms matching the floor criteria
-2. Then check which of those rooms have the specified item assigned
-3. Return the rooms that DON'T have that item (the ones missing from assignments)
+Answer the user's question clearly and accurately based on this data.
 `;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
