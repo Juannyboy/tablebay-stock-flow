@@ -10,12 +10,30 @@ const Reports = () => {
   const navigate = useNavigate();
   const [itemsReport, setItemsReport] = useState<any[]>([]);
   const [transfers, setTransfers] = useState<any[]>([]);
+  const [neededItems, setNeededItems] = useState<any[]>([]);
 
   useEffect(() => {
     fetchReports();
   }, []);
 
   const fetchReports = async () => {
+    // Needed items
+    const { data: neededData } = await supabase
+      .from("needed_items")
+      .select(`
+        *,
+        rooms (
+          room_number,
+          floors (
+            floor_number,
+            display_name
+          )
+        )
+      `)
+      .order("requested_at", { ascending: false });
+
+    if (neededData) setNeededItems(neededData);
+
     // Items with assignments
     const { data: itemsData } = await supabase
       .from("items")
@@ -103,6 +121,54 @@ const Reports = () => {
         </div>
 
         <h1 className="text-3xl font-bold mb-8">Reports & History</h1>
+
+        {/* Requested Items Report */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Requested Items</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {neededItems.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">
+                No items requested yet
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {neededItems.map((item) => (
+                  <div key={item.id} className="border-b pb-4 last:border-0">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold">{item.item_type}</h3>
+                        {item.description && (
+                          <p className="text-sm text-muted-foreground">{item.description}</p>
+                        )}
+                        <p className="text-sm mt-1">
+                          <span className="font-medium">Room:</span> {item.rooms?.room_number} - {item.rooms?.floors?.display_name}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">Quantity:</span> {item.quantity}
+                        </p>
+                        {item.notes && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            <span className="font-medium">Notes:</span> {item.notes}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={item.fulfilled ? "default" : "secondary"}>
+                          {item.fulfilled ? "Fulfilled" : "Pending"}
+                        </Badge>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {new Date(item.requested_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Items Report */}
         <Card className="mb-8">
