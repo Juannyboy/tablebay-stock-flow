@@ -3,8 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, DoorOpen } from "lucide-react";
+import { ArrowLeft, DoorOpen, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { CreateRoomsDialog } from "@/components/CreateRoomsDialog";
 
 interface Room {
   id: string;
@@ -18,6 +19,7 @@ const FloorView = () => {
   const navigate = useNavigate();
   const [floor, setFloor] = useState<any>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [createRoomsOpen, setCreateRoomsOpen] = useState(false);
 
   useEffect(() => {
     if (floorId) {
@@ -74,11 +76,17 @@ const FloorView = () => {
           Back to Dashboard
         </Button>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">{floor.display_name}</h1>
-          <p className="text-muted-foreground">
-            {rooms.length} rooms on this floor
-          </p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">{floor.display_name}</h1>
+            <p className="text-muted-foreground">
+              {rooms.length} rooms on this floor
+            </p>
+          </div>
+          <Button onClick={() => setCreateRoomsOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Rooms
+          </Button>
         </div>
 
         {rooms.length === 0 ? (
@@ -126,6 +134,13 @@ const FloorView = () => {
             ))}
           </div>
         )}
+
+        <CreateRoomsDialog
+          floorId={floorId!}
+          open={createRoomsOpen}
+          onOpenChange={setCreateRoomsOpen}
+          onRoomsCreated={fetchFloorData}
+        />
       </div>
     </div>
   );

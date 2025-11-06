@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const Reports = () => {
@@ -81,17 +81,26 @@ const Reports = () => {
     ).join(" ");
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="container mx-auto">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-          className="mb-6"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
-        </Button>
+        <div className="flex justify-between items-center mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <Button onClick={handlePrint} className="print:hidden">
+            <Printer className="mr-2 h-4 w-4" />
+            Print PDF
+          </Button>
+        </div>
 
         <h1 className="text-3xl font-bold mb-8">Reports & History</h1>
 

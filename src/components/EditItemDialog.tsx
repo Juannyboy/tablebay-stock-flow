@@ -37,6 +37,7 @@ export const EditItemDialog = ({
   const [itemType, setItemType] = useState(item.item_type);
   const [description, setDescription] = useState(item.description);
   const [quantity, setQuantity] = useState(item.quantity_total);
+  const [addQuantity, setAddQuantity] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,12 +45,14 @@ export const EditItemDialog = ({
     setLoading(true);
 
     try {
+      const newTotalQuantity = quantity + addQuantity;
+      
       const { error } = await supabase
         .from("items")
         .update({
           item_type: itemType,
           description,
-          quantity_total: quantity,
+          quantity_total: newTotalQuantity,
         })
         .eq("id", item.id);
 
@@ -94,7 +97,7 @@ export const EditItemDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="quantity">Total Quantity</Label>
+            <Label htmlFor="quantity">Current Total Quantity</Label>
             <Input
               id="quantity"
               type="number"
@@ -105,6 +108,20 @@ export const EditItemDialog = ({
             />
             <p className="text-sm text-muted-foreground">
               Minimum: {item.quantity_assigned} (already assigned)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="addQuantity">Add More Quantity</Label>
+            <Input
+              id="addQuantity"
+              type="number"
+              min={0}
+              value={addQuantity}
+              onChange={(e) => setAddQuantity(parseInt(e.target.value) || 0)}
+            />
+            <p className="text-sm text-muted-foreground">
+              New total will be: {quantity + addQuantity}
             </p>
           </div>
 
