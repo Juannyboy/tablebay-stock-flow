@@ -3,9 +3,21 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, DoorOpen, Plus } from "lucide-react";
+import { ArrowLeft, DoorOpen, Plus, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreateRoomsDialog } from "@/components/CreateRoomsDialog";
+import { EditRoomDialog } from "@/components/EditRoomDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface Room {
   id: string;
@@ -20,6 +32,10 @@ const FloorView = () => {
   const [floor, setFloor] = useState<any>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [createRoomsOpen, setCreateRoomsOpen] = useState(false);
+  const [editRoomOpen, setEditRoomOpen] = useState(false);
+  const [roomToEdit, setRoomToEdit] = useState<{ id: string; room_number: string } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState<{ id: string; room_number: string } | null>(null);
 
   useEffect(() => {
     if (floorId) {
@@ -62,6 +78,27 @@ const FloorView = () => {
     }
   };
 
+  const handleDeleteRoom = async () => {
+    if (!roomToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from("rooms")
+        .delete()
+        .eq("id", roomToDelete.id);
+
+      if (error) throw error;
+
+      toast.success("Room deleted successfully");
+      fetchFloorData();
+      setDeleteDialogOpen(false);
+      setRoomToDelete(null);
+    } catch (error) {
+      console.error("Error deleting room:", error);
+      toast.error("Failed to delete room");
+    }
+  };
+
   if (!floor) return null;
 
   return (
@@ -100,25 +137,48 @@ const FloorView = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {rooms.map((room) => (
-              <Card
-                key={room.id}
-                className="cursor-pointer hover:border-primary transition-colors"
-                onClick={() => navigate(`/room/${room.id}`)}
-              >
+              <Card key={room.id} className="hover:border-primary transition-colors">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle 
+                      className="flex items-center gap-2 cursor-pointer"
+                      onClick={() => navigate(`/room/${room.id}`)}
+                    >
                       <DoorOpen className="h-5 w-5" />
                       Room {room.room_number}
                     </CardTitle>
-                    {room.inRoomCount === room.assignmentCount && room.assignmentCount > 0 && (
-                      <Badge variant="default" className="bg-success">
-                        Complete
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {room.inRoomCount === room.assignmentCount && room.assignmentCount > 0 && (
+                        <Badge variant="default" className="bg-success">
+                          Complete
+                        </Badge>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRoomToEdit({ id: room.id, room_number: room.room_number });
+                          setEditRoomOpen(true);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRoomToDelete({ id: room.id, room_number: room.room_number });
+                          setDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent onClick={() => navigate(`/room/${room.id}`)} className="cursor-pointer">
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Items assigned:</span>
@@ -141,6 +201,28 @@ const FloorView = () => {
           onOpenChange={setCreateRoomsOpen}
           onRoomsCreated={fetchFloorData}
         />
+
+        <EditRoomDialog
+          room={roomToEdit}
+          open={editRoomOpen}
+          onOpenChange={setEditRoomOpen}
+          onRoomUpdated={fetchFloorData}
+        />
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Room</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete room {roomToDelete?.room_number}? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteRoom}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
