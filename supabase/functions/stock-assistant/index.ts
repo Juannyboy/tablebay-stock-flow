@@ -54,8 +54,9 @@ DATA ANALYSIS RULES:
    - Match partial names: "door" matches "doorframes", "Door Frames", etc.
    
 4. ROOM COMPLETION:
-   - Room is complete when ALL needed items are assigned AND status="in_room"
-   - Room is incomplete if ANY needed items are missing or not "in_room"
+   - Room is complete when ALL needed items have fulfilled=true (checked off in the checklist)
+   - Room is incomplete if ANY needed items have fulfilled=false (not yet checked off)
+   - The system uses a checklist where staff tick items as they physically arrive in rooms
    
 5. SHORTAGE ANALYSIS:
    - Compare needed_items against current assignments

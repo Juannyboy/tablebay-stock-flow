@@ -10,7 +10,8 @@ import {
   TruckIcon,
   Wrench,
   BarChart3,
-  Plus
+  Plus,
+  CheckSquare
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NeededItemDialog } from "@/components/NeededItemDialog";
@@ -151,7 +152,7 @@ const Dashboard = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
           <Button 
             size="lg" 
             className="h-20"
@@ -168,6 +169,15 @@ const Dashboard = () => {
           >
             <Building2 className="mr-2 h-5 w-5" />
             Stock by Room
+          </Button>
+          <Button 
+            size="lg" 
+            className="h-20"
+            variant="secondary"
+            onClick={() => navigate("/room-checklist")}
+          >
+            <CheckSquare className="mr-2 h-5 w-5" />
+            Room Checklist
           </Button>
           <Button 
             size="lg" 
