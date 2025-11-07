@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { RoomCompletionReport } from "@/components/RoomCompletionReport";
+import "./Reports.css";
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -121,6 +123,11 @@ const Reports = () => {
         </div>
 
         <h1 className="text-3xl font-bold mb-8">Reports & History</h1>
+
+        {/* Room Completion and Shortage Report */}
+        <div className="mb-8">
+          <RoomCompletionReport />
+        </div>
 
         {/* Requested Items Report */}
         <Card className="mb-8">

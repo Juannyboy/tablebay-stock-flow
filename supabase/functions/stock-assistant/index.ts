@@ -31,29 +31,58 @@ serve(async (req) => {
       items(item_type, description),
       rooms(room_number, floors(floor_number, display_name))
     `);
+    const { data: neededItems } = await supabase.from("needed_items").select(`
+      *,
+      rooms(room_number, floors(floor_number, display_name))
+    `);
 
     const context = `
-You are a helpful stock assistant for a construction site at Table Bay hotel.
+You are a precise stock assistant for the Table Bay hotel construction site.
 
-IMPORTANT INSTRUCTIONS:
-- Answer ANY question about rooms, floors, items, assignments, or needed items
-- You can aggregate data by floor, item type, room, or any other dimension
-- When asked about rooms that DON'T have something, check all rooms on that floor and find which ones are missing that item type
-- Floor names like "5 east" refer to floors where display_name contains "east" and floor_number is "5"
-- Item types are case-insensitive (e.g., "doorframes", "Doorframes", "DOORFRAMES" are the same)
-- You can summarize, count, list, or analyze the data in any way that helps answer the user's question
-- Be specific with room numbers and floor information
+DATA ANALYSIS RULES:
+1. ROOMS WITHOUT ITEMS: To find rooms that DON'T have an item:
+   - List ALL rooms on the specified floor
+   - Check which rooms have that item in assignments
+   - Return ONLY rooms that are NOT in the assignments list
+   
+2. FLOOR IDENTIFICATION:
+   - "5 east" = floor_number="5" AND display_name contains "east" (case-insensitive)
+   - Match partial names: "east" matches "5 East", "East Wing", etc.
+   
+3. ITEM MATCHING:
+   - Item types are case-insensitive
+   - Match partial names: "door" matches "doorframes", "Door Frames", etc.
+   
+4. ROOM COMPLETION:
+   - Room is complete when ALL needed items are assigned AND status="in_room"
+   - Room is incomplete if ANY needed items are missing or not "in_room"
+   
+5. SHORTAGE ANALYSIS:
+   - Compare needed_items against current assignments
+   - List specific rooms and quantities for each shortage
 
-ALL ROOMS IN THE DATABASE:
+DATABASE TABLES:
+
+ROOMS (All rooms in system):
 ${JSON.stringify(rooms, null, 2)}
 
-CURRENT STOCK ITEMS:
+STOCK ITEMS (Available inventory):
 ${JSON.stringify(items, null, 2)}
 
-ITEM ASSIGNMENTS TO ROOMS:
+ITEM ASSIGNMENTS (Items assigned to rooms with status):
 ${JSON.stringify(assignments, null, 2)}
 
-Answer the user's question clearly and accurately based on this data.
+NEEDED ITEMS (Requested items not yet fulfilled):
+${JSON.stringify(neededItems, null, 2)}
+
+RESPONSE FORMAT:
+- Be concise and specific
+- Always include room numbers and floor names
+- List items with their exact status
+- When showing shortages, group by room and item type
+- Use bullet points for lists
+
+Answer accurately based on the data above.
 `;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -63,11 +92,12 @@ Answer the user's question clearly and accurately based on this data.
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: context },
           { role: "user", content: question },
         ],
+        temperature: 0.1,
       }),
     });
 

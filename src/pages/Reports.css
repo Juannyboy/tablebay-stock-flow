@@ -1,0 +1,26 @@
+@media print {
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  @page {
+    margin: 1cm;
+  }
+
+  h1 {
+    page-break-after: avoid;
+  }
+
+  .border-b {
+    page-break-inside: avoid;
+  }
+}
