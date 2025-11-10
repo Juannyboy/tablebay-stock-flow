@@ -202,7 +202,17 @@ const Dashboard = () => {
         {/* Floors Overview */}
         <Card>
           <CardHeader>
-            <CardTitle>Floors Overview</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Floors Overview</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/floor-management")}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Manage Floors
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

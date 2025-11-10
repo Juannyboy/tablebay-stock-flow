@@ -11,6 +11,7 @@ import RoomView from "./pages/RoomView";
 import Reports from "./pages/Reports";
 import RoomChecklist from "./pages/RoomChecklist";
 import RoomDetail from "./pages/RoomDetail";
+import FloorManagement from "./pages/FloorManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/reports" element={<Reports />} />
           <Route path="/checklist" element={<RoomChecklist />} />
           <Route path="/checklist/:roomId" element={<RoomDetail />} />
+          <Route path="/floor-management" element={<FloorManagement />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
