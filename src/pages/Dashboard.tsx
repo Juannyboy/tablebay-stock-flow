@@ -174,7 +174,7 @@ const Dashboard = () => {
             size="lg" 
             className="h-20"
             variant="secondary"
-            onClick={() => navigate("/room-checklist")}
+            onClick={() => navigate("/checklist")}
           >
             <CheckSquare className="mr-2 h-5 w-5" />
             Room Checklist
