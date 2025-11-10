@@ -13,8 +13,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Printer } from "lucide-react";
 import { toast } from "sonner";
+import "./RoomDetail.css";
 
 interface NeededItem {
   id: string;
@@ -40,6 +41,10 @@ const RoomDetail = () => {
   const [newItemType, setNewItemType] = useState("");
   const [newItemQuantity, setNewItemQuantity] = useState("1");
   const [newItemDescription, setNewItemDescription] = useState("");
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   useEffect(() => {
     if (roomId) {
@@ -107,7 +112,7 @@ const RoomDetail = () => {
       if (!neededItem) throw new Error("Item not found");
 
       if (!currentStatus) {
-        // Marking as fulfilled - create assignment
+        // Marking as fulfilled - create or find assignment
         // First, find or create the item in items table
         let { data: existingItem } = await supabase
           .from("items")
@@ -145,16 +150,26 @@ const RoomDetail = () => {
           if (updateError) throw updateError;
         }
 
-        // Create assignment
-        const { error: assignError } = await supabase
+        // Check if assignment already exists
+        const { data: existingAssignment } = await supabase
           .from("item_assignments")
-          .insert({
-            item_id: itemToAssign.id,
-            room_id: roomId,
-            status: "in_room",
-          });
+          .select("*")
+          .eq("item_id", itemToAssign.id)
+          .eq("room_id", roomId)
+          .maybeSingle();
 
-        if (assignError) throw assignError;
+        if (!existingAssignment) {
+          // Create assignment only if it doesn't exist
+          const { error: assignError } = await supabase
+            .from("item_assignments")
+            .insert({
+              item_id: itemToAssign.id,
+              room_id: roomId,
+              status: "in_room",
+            });
+
+          if (assignError) throw assignError;
+        }
 
         // Mark as fulfilled
         const { error: updateError } = await supabase
@@ -292,7 +307,7 @@ const RoomDetail = () => {
         <Button
           variant="ghost"
           onClick={() => navigate("/checklist")}
-          className="mb-4"
+          className="mb-4 print:hidden"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Rooms
@@ -314,10 +329,16 @@ const RoomDetail = () => {
                   </p>
                 )}
               </div>
-              <Button onClick={() => setShowAddItemDialog(true)} className="w-full md:w-auto">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Item
-              </Button>
+              <div className="flex gap-2 w-full md:w-auto print:hidden">
+                <Button onClick={() => setShowAddItemDialog(true)} className="flex-1 md:flex-initial">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Item
+                </Button>
+                <Button onClick={handlePrint} variant="outline" className="flex-1 md:flex-initial">
+                  <Printer className="mr-2 h-4 w-4" />
+                  Print
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -364,7 +385,7 @@ const RoomDetail = () => {
                       size="icon"
                       variant="ghost"
                       onClick={() => handleDeleteItem(item.id)}
-                      className="shrink-0"
+                      className="shrink-0 print:hidden"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

@@ -1,0 +1,28 @@
+@media print {
+  /* Hide navigation and interactive elements */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Ensure clean page breaks */
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Optimize card layout for printing */
+  .card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Remove shadows and borders for cleaner print */
+  * {
+    box-shadow: none !important;
+  }
+
+  /* Ensure proper spacing */
+  @page {
+    margin: 1cm;
+  }
+}
