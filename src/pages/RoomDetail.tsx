@@ -97,16 +97,123 @@ const RoomDetail = () => {
 
   const handleCheckItem = async (itemId: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
+      // Get the needed item details
+      const { data: neededItem } = await supabase
         .from("needed_items")
-        .update({ fulfilled: !currentStatus })
-        .eq("id", itemId);
+        .select("*")
+        .eq("id", itemId)
+        .single();
 
-      if (error) throw error;
+      if (!neededItem) throw new Error("Item not found");
 
-      toast.success(
-        !currentStatus ? "Item marked as received" : "Item marked as pending"
-      );
+      if (!currentStatus) {
+        // Marking as fulfilled - create assignment
+        // First, find or create the item in items table
+        let { data: existingItem } = await supabase
+          .from("items")
+          .select("*")
+          .eq("item_type", neededItem.item_type)
+          .maybeSingle();
+
+        let itemToAssign = existingItem;
+
+        if (!existingItem) {
+          // Create new item
+          const { data: newItem, error: createError } = await supabase
+            .from("items")
+            .insert({
+              item_type: neededItem.item_type,
+              description: neededItem.description,
+              quantity_total: neededItem.quantity,
+              quantity_assigned: neededItem.quantity,
+            })
+            .select()
+            .single();
+
+          if (createError) throw createError;
+          itemToAssign = newItem;
+        } else {
+          // Update existing item quantities
+          const { error: updateError } = await supabase
+            .from("items")
+            .update({
+              quantity_total: existingItem.quantity_total + neededItem.quantity,
+              quantity_assigned: existingItem.quantity_assigned + neededItem.quantity,
+            })
+            .eq("id", existingItem.id);
+
+          if (updateError) throw updateError;
+        }
+
+        // Create assignment
+        const { error: assignError } = await supabase
+          .from("item_assignments")
+          .insert({
+            item_id: itemToAssign.id,
+            room_id: roomId,
+            status: "in_room",
+          });
+
+        if (assignError) throw assignError;
+
+        // Mark as fulfilled
+        const { error: updateError } = await supabase
+          .from("needed_items")
+          .update({ fulfilled: true })
+          .eq("id", itemId);
+
+        if (updateError) throw updateError;
+
+        toast.success("Item marked as received and assigned to room");
+      } else {
+        // Marking as unfulfilled - remove assignment
+        // Find the assignment
+        const { data: existingItem } = await supabase
+          .from("items")
+          .select("id")
+          .eq("item_type", neededItem.item_type)
+          .maybeSingle();
+
+        if (existingItem) {
+          // Delete the assignment
+          const { error: deleteError } = await supabase
+            .from("item_assignments")
+            .delete()
+            .eq("item_id", existingItem.id)
+            .eq("room_id", roomId);
+
+          if (deleteError) throw deleteError;
+
+          // Update item quantities
+          const { data: item } = await supabase
+            .from("items")
+            .select("*")
+            .eq("id", existingItem.id)
+            .single();
+
+          if (item) {
+            const { error: updateError } = await supabase
+              .from("items")
+              .update({
+                quantity_assigned: Math.max(0, item.quantity_assigned - neededItem.quantity),
+              })
+              .eq("id", existingItem.id);
+
+            if (updateError) throw updateError;
+          }
+        }
+
+        // Mark as unfulfilled
+        const { error: updateError } = await supabase
+          .from("needed_items")
+          .update({ fulfilled: false })
+          .eq("id", itemId);
+
+        if (updateError) throw updateError;
+
+        toast.success("Item marked as pending");
+      }
+
       fetchRoomData();
     } catch (error) {
       console.error("Error updating item:", error);
